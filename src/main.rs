@@ -58,8 +58,6 @@ enum Command {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let env_values = env_runtime::load_from_os();
-    let _ = &env_values;
     let cli = Cli::parse();
     let endpoint = ApiEndpoint::parse(&cli.api_url).context("invalid API configuration")?;
 
