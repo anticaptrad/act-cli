@@ -1,0 +1,30 @@
+# flags-2-env surface for `act-cli`
+[identity]
+service = "act-cli"
+type_name = "CliEnv"
+
+[help]
+url = "https://github.com/anticaptrad/act-cli"
+columns = ["options", "env", "type", "default", "description"]
+
+[parse]
+allow_unknown = false
+
+[flags.act-cli-bind]
+env = "ACT_CLI_BIND"
+long = "act-cli-bind"
+type = "string"
+default = "127.0.0.1:9090"
+help = "Runtime environment key ACT_CLI_BIND."
+
+[flags.act-access-token]
+env = "ACT_ACCESS_TOKEN"
+long = "act-access-token"
+type = "string"
+help = "Runtime environment key ACT_ACCESS_TOKEN."
+
+[flags.act-api-url]
+env = "ACT_API_URL"
+long = "act-api-url"
+type = "string"
+help = "Runtime environment key ACT_API_URL."
