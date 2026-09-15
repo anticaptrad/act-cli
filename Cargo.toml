@@ -10,6 +10,7 @@ repository = "https://github.com/anticaptrad/act-cli"
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive", "env"] }
+ores-clis-core = { git = "https://github.com/ORESoftware/ores-clis-core.git", rev = "2ea696bd8dd066483d29c37af9e34036cbae82f9" }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
