@@ -12,8 +12,9 @@ use std::process::ExitCode;
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand};
 use ores_clis_core::{
-    ColorRole, EmitDisposition, EnvironmentHints, LogLevel, OutputMode, ProtocolEmitter,
-    RuntimePolicy, StreamRole, TerminalState, paint, parse_shared_argv, top_level_io,
+    CliPolicy, ColorRole, EmitDisposition, EnvironmentHints, LogLevel, OutputMode,
+    ProtocolEmitter, RuntimePolicy, StreamRole, TerminalState, paint, parse_shared_argv,
+    top_level_io,
 };
 
 use crate::client::{ApiClient, ApiEndpoint};
@@ -66,20 +67,31 @@ enum Command {
 async fn main() -> ExitCode {
     let mut raw = std::env::args();
     let program = raw.next().unwrap_or_else(|| "act".to_owned());
+    let terminals = TerminalState::detect();
+    let environment = EnvironmentHints::detect();
     let shared = match parse_shared_argv(raw) {
         Ok(shared) => shared,
         Err(error) => {
-            eprintln!("act: {error}");
+            let runtime = CliPolicy::default().resolve(terminals, environment);
+            emit_diagnostic(
+                runtime,
+                LogLevel::Error,
+                ColorRole::Error,
+                format!("act: {error}"),
+            );
             return ExitCode::from(2);
         }
     };
+    let runtime = shared.policy.resolve(terminals, environment);
     if shared.output_was_explicit() && matches!(shared.policy.output, OutputMode::Human) {
-        eprintln!("act: human output is unsupported; command results are JSON");
+        emit_diagnostic(
+            runtime,
+            LogLevel::Error,
+            ColorRole::Error,
+            "act: human output is unsupported; command results are JSON",
+        );
         return ExitCode::from(2);
     }
-    let runtime = shared
-        .policy
-        .resolve(TerminalState::detect(), EnvironmentHints::detect());
     let mut argv = Vec::with_capacity(shared.passthrough.len() + 1);
     argv.push(program);
     argv.extend(shared.passthrough);
