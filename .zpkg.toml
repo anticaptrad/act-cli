@@ -1,0 +1,21 @@
+[package]
+org = "anticaptrad"
+name = "act-cli"
+version = "0.1.0"
+description = "Safe operator CLI for the AntiCapTrad publishing platform"
+license = "MIT"
+language = "rust"
+
+[package.repository]
+vcs = "git"
+url = "https://github.com/anticaptrad/act-cli"
+
+[dependencies]
+"oresoftware/ores-clis-core" = "^0.1.0"
+
+[install]
+dir = ".vendor/.zed"
+
+[targets.repository]
+dir = "."
+adapter = "rust"

@@ -12,16 +12,31 @@ concurrency:
   group: cli-ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  ZED_CLI_REV: dbd63f1d87d12c2e8cb9a8c600fae9b79f94e559
+
 jobs:
   rust:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install Rust quality components
         run: rustup component add rustfmt clippy
+
+      - name: Install audited Zed CLI
+        run: cargo install --locked --git https://github.com/zed-pkg/zed-cli.git --rev "$ZED_CLI_REV" --bin zed
+
+      - name: Materialize frozen Zed dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          zed validate --require-lock
+          zed install --frozen --install-mode copy
 
       - name: Check formatting
         run: cargo fmt --check
