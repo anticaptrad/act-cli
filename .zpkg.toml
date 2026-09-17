@@ -19,6 +19,3 @@ dir = ".vendor/.zed"
 [targets.repository]
 dir = "."
 adapter = "rust"
-
-[publish]
-enabled = false
