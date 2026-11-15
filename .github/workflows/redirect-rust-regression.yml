@@ -1,0 +1,29 @@
+name: CLI redirect regression (Rust)
+on:
+  pull_request:
+    paths:
+      - 'src/client.rs'
+      - '.github/workflows/redirect-rust-regression.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/client.rs'
+      - '.github/workflows/redirect-rust-regression.yml'
+permissions:
+  contents: read
+jobs:
+  rust-redirect-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30
+        with:
+          toolchain: stable
+          components: rustfmt
+      - name: Check the changed Rust source
+        run: rustfmt --check --edition 2024 src/client.rs
+      - name: Execute Rust CLI tests
+        run: cargo test --locked
