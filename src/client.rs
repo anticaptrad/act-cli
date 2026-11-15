@@ -113,6 +113,9 @@ impl ApiClient {
 
         let mut response = request.send().await.map_err(ClientError::Request)?;
         let status = response.status();
+        if status.is_redirection() {
+            return Err(ClientError::RedirectRejected(status.as_u16()));
+        }
         let mut body = Vec::new();
         while let Some(chunk) = response.chunk().await.map_err(ClientError::Request)? {
             if body.len().saturating_add(chunk.len()) > MAX_RESPONSE_BYTES {
@@ -167,6 +170,8 @@ pub enum ClientError {
     Build(reqwest::Error),
     #[error("API request failed: {0}")]
     Request(reqwest::Error),
+    #[error("API redirect HTTP {0} was rejected before decoding its body")]
+    RedirectRejected(u16),
     #[error("API response exceeded the 1 MiB safety limit")]
     ResponseTooLarge,
     #[error("API returned malformed JSON: {0}")]
@@ -193,6 +198,46 @@ mod tests {
             ApiEndpoint::parse("https://user:secret@api.example"),
             Err(ClientError::EmbeddedCredentials)
         ));
+    }
+
+    #[tokio::test]
+    async fn redirects_fail_closed_before_invalid_upstream_json_is_decoded() {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").expect("loopback listener");
+        let port = listener.local_addr().expect("local address").port();
+        let server = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accepted probe");
+            stream
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .expect("read deadline");
+            let mut request = [0u8; 1024];
+            let _ = stream.read(&mut request).expect("read request");
+            stream
+                .write_all(
+                    b"HTTP/1.1 302 Found\r\nLocation: https://elsewhere.example/private\r\nContent-Type: application/json\r\nContent-Length: 8\r\nConnection: close\r\n\r\nnot json",
+                )
+                .expect("write redirect");
+        });
+
+        let endpoint =
+            ApiEndpoint::parse(&format!("http://127.0.0.1:{port}")).expect("local origin");
+        let client = ApiClient::new(endpoint).expect("HTTP client");
+        let error = client
+            .get("/health", None)
+            .await
+            .expect_err("redirect must fail");
+        assert!(matches!(error, ClientError::RedirectRejected(302)));
+        server.join().expect("loopback server");
+    }
+
+    #[test]
+    fn redirect_status_boundaries_match_client_policy() {
+        assert!(!StatusCode::from_u16(299).unwrap().is_redirection());
+        assert!(StatusCode::from_u16(300).unwrap().is_redirection());
+        assert!(StatusCode::from_u16(399).unwrap().is_redirection());
+        assert!(!StatusCode::from_u16(400).unwrap().is_redirection());
     }
 
     #[test]

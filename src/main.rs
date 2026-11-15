@@ -5,7 +5,6 @@ mod env_runtime;
 
 mod client;
 
-use std::env;
 
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand};
@@ -102,7 +101,7 @@ async fn main() -> Result<()> {
 }
 
 fn access_token() -> Result<String> {
-    let token = env::var("ACT_ACCESS_TOKEN")
+    let token = std::env::var("ACT_ACCESS_TOKEN")
         .context("ACT_ACCESS_TOKEN is required for this authenticated command")?;
     if token.trim().is_empty() {
         bail!("ACT_ACCESS_TOKEN is empty");

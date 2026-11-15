@@ -41,7 +41,7 @@ automation. Errors go to standard error and produce a non-zero exit code.
 
 - non-loopback endpoints require HTTPS;
 - URL credentials and fragments are rejected;
-- HTTP redirects are rejected instead of forwarding authorization;
+- HTTP redirects are rejected immediately, before decoding upstream response bodies, instead of forwarding authorization;
 - connection and total request timeouts are bounded;
 - response bodies are capped at 1 MiB;
 - API responses must be JSON;
