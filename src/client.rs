@@ -224,7 +224,10 @@ mod tests {
         let endpoint =
             ApiEndpoint::parse(&format!("http://127.0.0.1:{port}")).expect("local origin");
         let client = ApiClient::new(endpoint).expect("HTTP client");
-        let error = client.get("/health", None).await.expect_err("redirect must fail");
+        let error = client
+            .get("/health", None)
+            .await
+            .expect_err("redirect must fail");
         assert!(matches!(error, ClientError::RedirectRejected(302)));
         server.join().expect("loopback server");
     }
